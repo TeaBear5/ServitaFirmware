@@ -35,14 +35,6 @@ jobs:
             
             # Commit the version change
             git commit -am "Update SOFTWARE_VERSION to $VERSION"
-            
-            # Delete the tag locally and remotely if it exists
-            git tag -d $VERSION || true
-            git push origin :refs/tags/$VERSION || true
-            
-            # Recreate and push the new tag
-            git tag $VERSION
-            git push origin --tags
           fi
 
       - name: Install Arduino CLI
@@ -100,3 +92,23 @@ jobs:
             build/Servita.ino.partitions.bin
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # Step to push tag after a successful build and release
+      - name: Push new tag to remote
+        if: success()
+        run: |
+          VERSION=${{ steps.get_version.outputs.VERSION }}
+          
+          git tag -d $VERSION || true
+          git push origin :refs/tags/$VERSION || true
+          
+          git tag $VERSION
+          git push origin --tags
+
+      # Step to push changes to master branch
+      - name: Push changes to master branch
+        if: success()
+        run: |
+          git checkout master
+          git merge HEAD@{0}  # Merge the changes into master
+          git push origin master
