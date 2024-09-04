@@ -92,6 +92,8 @@ jobs:
             build/Servita.ino.partitions.bin
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          draft: false
 
       # Step to push tag after a successful build and release
       - name: Push new tag to remote
@@ -109,7 +111,8 @@ jobs:
       - name: Push changes to main branch
         if: success()
         run: |
-          git fetch origin main  # Fetch the main branch
-          git checkout main       # Check out the main branch
-          git merge HEAD@{0}      # Merge the changes into main
-          git push origin main    # Push the changes to the main branch
+          git fetch origin main          # Fetch the latest state of the main branch
+          git checkout main              # Switch to the main branch
+          git reset --hard origin/main   # Ensure the local main is in sync with the remote
+          git merge --no-ff HEAD         # Merge the detached HEAD into main
+          git push origin main           # Push the changes to main
